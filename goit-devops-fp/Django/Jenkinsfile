@@ -1,10 +1,14 @@
 pipeline {
     agent {
         kubernetes {
+            defaultContainer 'docker'
             yaml '''
 apiVersion: v1
 kind: Pod
+metadata:
+  namespace: jenkins
 spec:
+  serviceAccountName: jenkins
   containers:
   - name: docker
     image: docker:24.0-dind
