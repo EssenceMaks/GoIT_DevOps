@@ -4,7 +4,7 @@ applications:
     project: default
     source:
       repoURL: https://github.com/EssenceMaks/GoIT_DevOps.git # UPDATE THIS
-      targetRevision: HEAD
+      targetRevision: goit_dev_ops_fp
       path: goit-devops-fp/charts/django-app
     destination:
       server: https://kubernetes.default.svc
