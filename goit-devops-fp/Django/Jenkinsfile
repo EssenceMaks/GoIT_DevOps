@@ -32,15 +32,5 @@ pipeline {
                 }
             }
         }
-
-        stage('Deploy to EKS') {
-            steps {
-                script {
-                    // Assuming kubectl is configured on Jenkins agent or use a k8s plugin
-                    // Update the image tag in the helm chart values or set it during upgrade
-                    sh "helm upgrade --install django-app ./charts/django-app --set image.repository=${registry} --set image.tag=$BUILD_NUMBER --namespace default"
-                }
-            }
-        }
     }
 }
