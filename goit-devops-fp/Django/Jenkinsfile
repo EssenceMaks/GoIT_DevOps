@@ -11,17 +11,7 @@ metadata:
     jenkins: kaniko
 spec:
   serviceAccountName: jenkins
-  securityContext:
-    runAsUser: 0
-    fsGroup: 0
   containers:
-  - name: jnlp
-    image: jenkins/inbound-agent:latest
-    env:
-    - name: JENKINS_URL
-      value: "http://jenkins.jenkins.svc.cluster.local:8080"
-    - name: JENKINS_TUNNEL
-      value: "jenkins-agent.jenkins.svc.cluster.local:50000"
   - name: kaniko
     image: gcr.io/kaniko-project/executor:v1.16.0-debug
     imagePullPolicy: Always
