@@ -2,6 +2,8 @@ pipeline {
     agent {
         kubernetes {
             defaultContainer 'docker'
+            jenkinsUrl 'http://jenkins.jenkins.svc.cluster.local:8080'
+            jenkinsTunnel 'jenkins-agent.jenkins.svc.cluster.local:50000'
             yaml '''
 apiVersion: v1
 kind: Pod
