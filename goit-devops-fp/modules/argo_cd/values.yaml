@@ -1,0 +1,8 @@
+server:
+  service:
+    type: ClusterIP
+    
+  config:
+    repositories: |
+      - url: https://github.com/argoproj/argocd-example-apps.git
+        name: argo-helm

@@ -1,0 +1,30 @@
+# Отключаем тяжелые компоненты, без которых можно жить
+alertmanager:
+  enabled: false
+
+prometheus-node-exporter:
+  enabled: true
+
+# Ужимаем Графану
+grafana:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+  persistence:
+    enabled: false # Чтобы не возиться с дисками
+
+# Ужимаем сам Прометеус
+prometheus:
+  prometheusSpec:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi # Очень мало, но может влезть
+      limits:
+        memory: 512Mi
+    storageSpec: 
+      emptyDir: # Не используем платные EBS диски, храним в памяти/кеше
+        medium: Memory 
