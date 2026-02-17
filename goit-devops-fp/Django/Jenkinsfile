@@ -27,7 +27,7 @@ spec:
     }
 
     environment {
-        registry = "${ECR_REPOSITORY_URL}"
+        registry = '794531974301.dkr.ecr.eu-central-1.amazonaws.com/final-project-repo'
         registryCredential = 'ecr-credentials'
     }
 
