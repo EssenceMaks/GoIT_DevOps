@@ -48,8 +48,8 @@ spec:
                             
                             sh '''
                                 /kaniko/executor \
-                                    --context $(pwd)/Django \
-                                    --dockerfile $(pwd)/Django/Dockerfile \
+                                    --context $(pwd)/goit-devops-fp/Django \
+                                    --dockerfile $(pwd)/goit-devops-fp/Django/Dockerfile \
                                     --destination ${registry}:${BUILD_NUMBER} \
                                     --destination ${registry}:latest \
                                     --cache=true
