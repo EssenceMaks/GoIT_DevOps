@@ -16,6 +16,7 @@ spec:
     fsGroup: 0
   containers:
   - name: jnlp
+    image: jenkins/inbound-agent:latest
     env:
     - name: JENKINS_URL
       value: "http://jenkins.jenkins.svc.cluster.local:8080"
