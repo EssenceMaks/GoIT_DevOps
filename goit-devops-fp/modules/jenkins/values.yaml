@@ -8,7 +8,7 @@ controller:
   numExecutors: 2
   
   installPlugins:
-    - kubernetes:4203.v1dd44f5b_1cf9
+    - kubernetes:4306.vc91e951ea_eb_d
     - workflow-aggregator:596.v8c21c963d92d
     - git:5.2.1
     - configuration-as-code:2006.v001a_2ca_6b_574
