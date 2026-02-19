@@ -12,19 +12,20 @@ grafana:
       cpu: 50m
       memory: 64Mi
     limits:
-      memory: 128Mi
+      memory: 256Mi
   persistence:
     enabled: false # Чтобы не возиться с дисками
 
 # Ужимаем сам Прометеус
 prometheus:
   prometheusSpec:
+    retention: 2d
     resources:
       requests:
-        cpu: 50m
-        memory: 256Mi # Очень мало, но может влезть
-      limits:
+        cpu: 100m
         memory: 512Mi
-    storageSpec: 
-      emptyDir: # Не используем платные EBS диски, храним в памяти/кеше
-        medium: Memory 
+      limits:
+        memory: 1Gi
+    storageSpec:
+      emptyDir:
+        sizeLimit: 2Gi

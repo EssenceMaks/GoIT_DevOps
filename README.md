@@ -2,34 +2,59 @@
 
 Повний CI/CD pipeline для Django застосунку з автоматичним білдом, деплоєм та синхронізацією через GitOps.
 
+## 📸 Скріншоти (Proof of Work)
+
+1. **Jenkins** — сторінка job `django-app` з успішним білдом (зелена галочка)
+![Скріншот Jenkins — успішний білд](screenshots/1-jenkins-build.png)
+
+2. **Argo CD** — application `django-app` зі статусом Synced / Healthy
+![Скріншот Argo CD — django-app Synced](screenshots/2-argocd-app.png)
+
+3. **Django App** — відкритий у браузері `http://localhost:8000` з текстом "Hello from Django on EKS!"
+![Скріншот Django — веб-застосунок працює](screenshots/3-django-app.png)
+
+4. **Grafana** — Dashboard з графіками CPU/Memory кластера
+![Скріншот Grafana — Dashboard з метриками кластера](screenshots/4-grafana-dashboard.png)
+![Скріншот Grafana — Prometheus метрики кластера](screenshots/4_1-grafana-prometheus.png)
+
+5. **Prometheus** — Status → Targets (всі targets UP)
+![Скріншот Prometheus — Targets UP](screenshots/5_2-prometheus-targets.png)
+![Скріншот Prometheus — Targets UP (CLI)](screenshots/5_1-prometheus-targets.png)
+
+6. **kubectl** — вивід `kubectl get pods --all-namespaces` (всі поди Running)
+![Скріншот kubectl — всі поди Running](screenshots/6-kubectl-pods.png)
+
+---
+
 ## ⚠️ AWS Configuration
 
 **Цей проєкт налаштовано на region `eu-central-1`**
 
-- **EKS Nodes**: 3× `t3.small`
+- **EKS Nodes**: 3× `t3.small` (2 vCPU, 2 GB RAM)
 - **RDS Instance**: `db.t3.micro` (PostgreSQL 16.6)
-- **Monitoring**: Prometheus + Grafana
+- **Monitoring**: Prometheus + Grafana (kube-prometheus-stack)
 
 ## 🎯 Що реалізовано
 
 ### Інфраструктура (Terraform)
 
 - **S3 + DynamoDB**: Backend для Terraform state
-- **VPC**: Публічні та приватні підмережі
+- **VPC**: Публічні та приватні підмережі, Internet Gateway, NAT
 - **ECR**: Docker registry для образів
 - **EKS**: Kubernetes кластер з EBS CSI Driver
 - **RDS**: PostgreSQL база даних
-- **Jenkins**: CI сервер (Helm)
-- **Argo CD**: GitOps CD інструмент (Helm)
-- **Prometheus + Grafana**: Моніторинг
+- **Jenkins**: CI сервер (Helm) з Kubernetes plugin для динамічних агентів
+- **Argo CD**: GitOps CD інструмент (Helm) з автоматичною синхронізацією
+- **Prometheus + Grafana**: Моніторинг кластера та застосунку
 
 ### CI/CD Pipeline
 
-1. **Jenkins** збирає Docker образ
-2. **Jenkins** пушить образ до ECR
-3. **Jenkins** оновлює тег в Helm chart
-4. **Argo CD** автоматично виявляє зміни в Git
-5. **Argo CD** синхронізує новий образ в Kubernetes
+1. **Jenkins** збирає Docker образ через **Kaniko** (без Docker-in-Docker)
+2. **Jenkins** пушить образ до **ECR**
+3. **Argo CD** автоматично виявляє зміни в Git (Helm chart)
+4. **Argo CD** синхронізує новий образ в Kubernetes
+5. **Prometheus** збирає метрики з Django (`/metrics` endpoint)
+6. **Grafana** візуалізує метрики кластера та застосунку
 
 ## 📁 Структура проєкту
 
@@ -39,67 +64,111 @@ goit-devops-fp/
 ├── backend.tf                   # S3 backend конфігурація
 ├── outputs.tf                   # Outputs всіх модулів
 ├── variables.tf                 # Змінні проєкту
-├── secrets.tfvars               # Секретні змінні (паролі)
-├── Django/                      # Django застосунок + Jenkinsfile
-│   ├── Dockerfile
-│   └── Jenkinsfile
+├── secrets.tfvars               # Секретні змінні (паролі) — НЕ в Git!
+├── Django/                      # Django застосунок
+│   ├── Dockerfile               # Docker образ для Django
+│   ├── Jenkinsfile              # CI pipeline (Kaniko + ECR)
+│   ├── requirements.txt         # Python залежності (django-prometheus)
+│   └── myproject/               # Django проєкт
 ├── modules/                     # Terraform модулі
-│   ├── s3-backend/
-│   ├── vpc/
-│   ├── ecr/
-│   ├── eks/
-│   ├── rds/
-│   ├── jenkins/
-│   ├── argo_cd/
-│   └── monitoring/
-└── charts/                      # Helm charts
-    └── django-app/
+│   ├── s3-backend/              # S3 + DynamoDB для state
+│   ├── vpc/                     # VPC, підмережі, IGW, NAT
+│   ├── ecr/                     # ECR репозиторій
+│   ├── eks/                     # EKS кластер + EBS CSI Driver
+│   ├── rds/                     # RDS PostgreSQL
+│   ├── jenkins/                 # Jenkins (Helm)
+│   ├── argo_cd/                 # Argo CD (Helm) + Applications
+│   │   └── charts/              # Helm chart для ArgoCD Applications
+│   └── monitoring/              # Prometheus + Grafana (Helm)
+└── charts/                      # Helm charts для деплою
+    └── django-app/              # Helm chart Django застосунку
+        └── templates/
+            ├── deployment.yaml
+            ├── service.yaml
+            ├── configmap.yaml
+            ├── secret.yaml
+            ├── servicemonitor.yaml  # Prometheus ServiceMonitor
+            └── hpa.yaml
 ```
 
 ## 🚀 Інструкція запуску
 
-### 1. Налаштування GitHub Репозиторіїв
+### Передумови
 
-Для повноцінної роботи CI/CD (щоб Jenkins та ArgoCD не були пустими) потрібно створити **2 репозиторії** на GitHub:
+```powershell
+# Перевірте встановлені інструменти
+terraform --version   # >= 1.0
+aws --version         # AWS CLI v2
+kubectl version --client
+helm version
+git --version
 
-1.  **Application Repo** (код застосунку):
-    *   Залийте вміст папки `Django/`
-    *   Додайте `Jenkinsfile` в корінь цього репозиторію.
-2.  **Helm Repo** (конфігурація деплою):
-    *   Залийте вміст папки `charts/`
+# AWS credentials мають бути налаштовані
+aws configure
+# Або через змінні середовища: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+```
 
-### 2. Налаштування змінних
+### Крок 1: Клонування репозиторію
 
-Оновіть файли конфігурації посиланнями на ваші репозиторії:
+```powershell
+git clone https://github.com/EssenceMaks/GoIT_DevOps.git
+cd GoIT_DevOps
+git checkout goit_dev_ops_fp
+```
 
-*   **Jenkinsfile** (`Django/Jenkinsfile`): Вкажіть правильний ECR registry URL.
-*   **ArgoCD Values** (`modules/argo_cd/charts/values.yaml`): Вкажіть `repoURL` на ваш Helm Repo.
+### Крок 2: Налаштування змінних
 
-### 3. Розгортання інфраструктури (PowerShell)
+Створіть файл `goit-devops-fp/secrets.tfvars`:
+
+```hcl
+db_password            = "ВашПарольБД"
+jenkins_admin_password = "ВашПарольJenkins"
+grafana_admin_password = "ВашПарольGrafana"
+argocd_admin_password  = "ВашПарольArgoCD"
+```
+
+Оновіть конфігурації:
+- **`Django/Jenkinsfile`** — рядок `registry`: вкажіть ваш ECR URL (`<AWS_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/<REPO>`)
+- **`modules/argo_cd/charts/values.yaml`** — `repoURL`: URL вашого GitHub репозиторію, `targetRevision`: ваша гілка
+
+### Крок 3: Розгортання інфраструктури
 
 ```powershell
 cd goit-devops-fp
 
-# 1. Ініціалізація та створення бекенду (якщо вперше)
-# terraform init
-# terraform apply -target=module.s3_backend -var-file="secrets.tfvars"
-# (Потім розкоментуйте backend.tf)
+# 1. Ініціалізація (перший раз — без S3 backend)
+terraform init
 
-# 2. Розгортання всього
+# 2. Створення S3 backend
+terraform apply -target=module.s3_backend -var-file="secrets.tfvars"
+
+# 3. Розкоментуйте backend.tf, потім:
 terraform init -migrate-state
+
+# 4. Розгортання всієї інфраструктури (~15-20 хвилин)
 terraform apply -var-file="secrets.tfvars"
 ```
 
-### 4. Доступ до сервісів
+### Крок 4: Підключення до EKS
 
-Після розгортання виконайте Port-Forwarding у **різних терміналах**:
+```powershell
+aws eks update-kubeconfig --region eu-central-1 --name <eks-cluster-name>
+
+# Перевірка
+kubectl get nodes
+kubectl get pods --all-namespaces
+```
+
+### Крок 5: Доступ до сервісів (Port-Forwarding)
+
+Відкрийте **окремий термінал** для кожного сервісу:
 
 **Jenkins:**
 ```powershell
 kubectl port-forward svc/jenkins 8080:8080 -n jenkins
 # URL: http://localhost:8080
 # Login: admin
-# Password: (з secrets.tfvars)
+# Password: (з secrets.tfvars — jenkins_admin_password)
 ```
 
 **Argo CD:**
@@ -107,7 +176,6 @@ kubectl port-forward svc/jenkins 8080:8080 -n jenkins
 kubectl port-forward svc/argo-cd-argocd-server 8081:443 -n argocd
 # URL: https://localhost:8081
 # Login: admin
-# Password: Отримайте командою нижче
 ```
 *Отримати пароль ArgoCD:*
 ```powershell
@@ -119,30 +187,162 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n monitoring
 # URL: http://localhost:3000
 # Login: admin
-# Password: (з secrets.tfvars)
+# Password: (з secrets.tfvars — grafana_admin_password)
 ```
 
-## 📊 Як наповнити моніторинг даними?
+**Prometheus:**
+```powershell
+kubectl port-forward svc/kube-prometheus-stack-prometheus 9090:9090 -n monitoring
+# URL: http://localhost:9090
+```
 
-Щоб графіки в Grafana не були пустими:
+## ⚙️ Налаштування сервісів після розгортання
 
-1.  Зайдіть в Grafana (http://localhost:3000).
-2.  Перейдіть в **Dashboards -> New -> Import**.
-3.  Завантажте ID популярних дашбордів:
-    *   **315** (Kubernetes Cluster Monitoring)
-    *   **6417** (Kubernetes Pods)
-    *   **1860** (Node Exporter Full)
-4.  Виберіть джерело даних **Prometheus**.
+### Jenkins — Створення Pipeline та Credentials
 
-Тепер ви побачите реальне навантаження вашого кластера!
+#### 1. Створення ECR Credentials
 
-## 🔄 Як запустити CI/CD?
+1. Перейдіть: **Manage Jenkins** → **Credentials** → **(global)** → **Add Credentials**
+2. **Kind**: `Username with password`
+3. **Username**: ваш `AWS_ACCESS_KEY_ID`
+4. **Password**: ваш `AWS_SECRET_ACCESS_KEY`
+5. **ID**: `ecr-credentials`
+6. Натисніть **Create**
 
-1.  В **Jenkins** створіть новий **Pipeline** job.
-    *   В секції **Pipeline** виберіть "Pipeline script from SCM".
-    *   SCM: **Git**.
-    *   Repository URL: Ваш GitHub репозиторій з кодом Django.
-    *   Script Path: `Jenkinsfile`.
-2.  Натисніть **Build Now**.
-3.  Після успішного білда Jenkins оновить версію в Helm Chart.
-4.  **ArgoCD** побачить зміни і автоматично оновить Kubernetes.
+#### 2. Створення Pipeline Job
+
+1. На головній сторінці: **New Item** → ім'я: `django-app` → **Pipeline** → OK
+2. В секції **Pipeline**:
+   - **Definition**: `Pipeline script from SCM`
+   - **SCM**: `Git`
+   - **Repository URL**: `https://github.com/EssenceMaks/GoIT_DevOps.git`
+   - **Branch Specifier**: `*/goit_dev_ops_fp`
+   - **Script Path**: `goit-devops-fp/Django/Jenkinsfile`
+3. Натисніть **Save** → **Build Now**
+
+### Argo CD — Перевірка синхронізації
+
+1. Відкрийте https://localhost:8081
+2. Знайдіть application **django-app**
+3. Перевірте статус: має бути **Synced** + **Healthy**
+4. Якщо **OutOfSync** — натисніть **Sync**
+
+### Grafana — Імпорт Dashboards
+
+1. Відкрийте http://localhost:3000
+2. Перейдіть: **Dashboards** → **New** → **Import**
+3. Введіть ID дашборду та натисніть **Load**:
+
+| Dashboard ID | Назва | Опис |
+|---|---|---|
+| **315** | Kubernetes Cluster Monitoring | Загальний огляд кластера |
+| **6417** | Kubernetes Pods | Метрики подів |
+| **1860** | Node Exporter Full | Детальні метрики нод |
+
+4. Виберіть **Data Source**: `Prometheus`
+5. Натисніть **Import**
+
+### Prometheus — Перевірка Targets
+
+1. Відкрийте http://localhost:9090
+2. Перейдіть: **Status** → **Targets**
+3. Перевірте що всі targets мають статус **UP**
+
+## 🔄 Робочий процес CI/CD
+
+### Як працює автоматичний деплой:
+
+```
+Developer pushes code → Jenkins detects → Kaniko builds image → Push to ECR
+                                                                     ↓
+                              Argo CD syncs ← Git repo updated ← New image tag
+                                   ↓
+                            Kubernetes updated → Django pod restarted with new image
+```
+
+1. Розробник пушить зміни в GitHub
+2. Jenkins виявляє зміни та запускає pipeline
+3. Kaniko збирає Docker образ всередині Kubernetes (без Docker daemon)
+4. Образ пушиться до ECR з тегами `latest` та `BUILD_NUMBER`
+5. Argo CD виявляє зміни в Helm chart та синхронізує деплой
+6. Kubernetes оновлює под з новою версією образу
+
+## 📊 Моніторинг
+
+### Django Metrics
+
+Django застосунок експортує метрики через `django-prometheus`:
+- Endpoint: `/metrics`
+- Метрики: HTTP запити, latency, response codes
+
+### Kubernetes Metrics
+
+Prometheus автоматично збирає:
+- **Node Exporter**: CPU, RAM, Disk, Network нод
+- **Kube State Metrics**: стан подів, деплойментів, сервісів
+- **cAdvisor**: ресурси контейнерів
+
+## 🔧 Troubleshooting
+
+### Jenkins агент не запускається
+
+```powershell
+# Перевірте логи Jenkins
+kubectl logs -n jenkins jenkins-0 -c jenkins --tail=50
+
+# Перевірте поди агента
+kubectl get pods -n jenkins
+
+# Перевірте сервіс агента
+kubectl get svc jenkins-agent -n jenkins
+```
+
+### Argo CD показує Degraded
+
+```powershell
+# Перевірте поди застосунку
+kubectl get pods -n default -l "app.kubernetes.io/name=django-app"
+kubectl describe pod <pod-name> -n default
+kubectl logs <pod-name> -n default
+```
+
+### Grafana не показує дані
+
+```powershell
+# Перевірте чи Prometheus працює
+kubectl get pods -n monitoring | Select-String prometheus
+
+# Перевірте Data Sources в Grafana
+# Grafana UI → Connections → Data Sources → Prometheus → Test
+```
+
+### ImagePullBackOff
+
+```powershell
+# Перевірте чи образ існує в ECR
+aws ecr describe-images --repository-name final-project-repo --region eu-central-1
+```
+
+## 🧹 Очищення ресурсів
+
+```powershell
+# ⚠️ ВАЖЛИВО: видаляйте ресурси після тестування щоб уникнути витрат!
+
+cd goit-devops-fp
+
+# Видалення всієї інфраструктури
+terraform destroy -var-file="secrets.tfvars"
+
+# ⚠️ Після destroy також видаляється S3 bucket зі state!
+# При повторному розгортанні починайте з Кроку 3.
+```
+
+## 📚 Додаткові ресурси
+
+- [Jenkins Documentation](https://www.jenkins.io/doc/)
+- [Argo CD Documentation](https://argo-cd.readthedocs.io/)
+- [Kaniko Documentation](https://github.com/GoogleContainerTools/kaniko)
+- [EKS Best Practices](https://aws.github.io/aws-eks-best-practices/)
+- [Helm Documentation](https://helm.sh/docs/)
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [Grafana Dashboards](https://grafana.com/grafana/dashboards/)
