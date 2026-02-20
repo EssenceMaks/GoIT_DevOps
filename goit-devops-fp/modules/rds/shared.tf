@@ -50,6 +50,11 @@ resource "aws_db_parameter_group" "default" {
     apply_method = "pending-reboot"
   }
 
+  parameter {
+    name  = "work_mem"
+    value = "4096"
+  }
+
   tags = {
     Name = "${var.project_name}-pg"
   }
@@ -65,6 +70,11 @@ resource "aws_rds_cluster_parameter_group" "aurora" {
   parameter {
     name  = "log_statement"
     value = "none"
+  }
+
+  parameter {
+    name  = "work_mem"
+    value = "4096"
   }
 
   tags = {

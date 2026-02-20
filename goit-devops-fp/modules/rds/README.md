@@ -7,6 +7,7 @@
 - **Універсальність**: Підтримка `aws_db_instance` (RDS) та `aws_rds_cluster` (Aurora).
 - **Гнучкість**: Можливість вибору типу БД через змінну `use_aurora`.
 - **Автоматизація**: Автоматичне створення Security Group, Subnet Group та Parameter Groups.
+- **Parameter Groups** налаштовані з базовими параметрами: `max_connections`, `log_statement`, `work_mem`.
 
 ## 📦 Змінні (Variables)
 
