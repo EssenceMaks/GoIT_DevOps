@@ -1,3 +1,116 @@
+> Цей проект базується на [фінальному проекті GoIT DevOps](https://github.com/EssenceMaks/GoIT_DevOps/tree/goit_dev_ops_final-project)
+> та розширює його підтримкою **Universal RDS/Aurora модуля** для гнучкого перемикання між типами Баз Даних.
+
+---
+
+## 🗄️ Universal Aurora / RDS Module
+
+Модуль `modules/rds` є **універсальним** — одним налаштуванням перемикається між:
+- ✅ **Standard RDS PostgreSQL** (Free Tier, за замовчуванням)
+- 🔄 **AWS Aurora Cluster** (платно, вмикається через feature flag)
+
+### Як переключитися на Aurora
+
+1. Відкрийте `goit-devops-fp/main.tf`, знайдіть блок `module "rds"` та змініть `use_aurora`:
+
+```hcl
+module "rds" {
+  # ...
+  use_aurora     = true            # false = Standard RDS, true = Aurora
+  engine         = "aurora-postgresql"
+  engine_version = "16.1"
+  instance_class = "db.t3.medium"  # Aurora вимагає >= t3.medium
+}
+```
+
+2. Застосуйте зміни:
+
+```bash
+terraform apply
+```
+
+> **⚠️ Важливо:** Aurora не входить у Free Tier. Використовуйте лише якщо готові до витрат (~$0.10/год мінімум).
+
+### Особливості реалізації
+
+| Властивість | Деталі |
+|---|---|
+| **Єдиний модуль** | Один `modules/rds` для обох типів БД |
+| **Feature flag** | `use_aurora = true/false` у `main.tf` |
+| **Безпека** | Security Groups та Subnets створюються автоматично |
+| **Гнучкість** | Підтримка `multi_az` та кастомних параметрів |
+
+---
+
+## 🧪 Результати дослідження Aurora на Free Tier
+
+### Крок 1 — Спроба переключення на Aurora
+
+Змінено `use_aurora = true` → запущено `terraform apply`:
+
+![terraform apply — спроба Aurora](screenshots/aurora_update_1.png)
+
+| Питання | Результат |
+|---|---|
+| Конфігурація написана правильно? | ✅ Так |
+| Переключення відбулось? | ❌ Ні |
+| Aurora на Free Tier можлива? | ❌ Ні — завжди платна |
+
+**Причина помилки:**
+
+```
+FreeTierRestrictionError: To use Aurora clusters with free plan accounts
+you need to set WithExpressConfiguration
+```
+
+AWS блокує Aurora на Free Tier акаунтах. Параметр `WithExpressConfiguration` — нова можливість AWS API, яку Terraform **поки не підтримує**:
+
+```hcl
+# Terraform AWS Provider не має цього параметра:
+resource "aws_rds_cluster" "aurora" {
+  # with_express_configuration = true  ← недоступно
+}
+```
+
+> Навіть окремий мінімальний Aurora модуль з 10 рядків коду дасть ту саму помилку — справа в AWS акаунті, не в коді.
+
+### Крок 2 — Повернення до Standard RDS
+
+Повернуто `use_aurora = false` в `main.tf` та `variables.tf` → `terraform apply`:
+
+![terraform apply — повернення до RDS](screenshots/aurora_update_2.png)
+![terraform apply — повернення до RDS](screenshots/aurora_update_3.png)
+![terraform apply — повернення до RDS](screenshots/aurora_update_4.png)
+
+```
+Apply complete! Resources: 2 added, 0 changed, 1 destroyed.
+rds_endpoint = "terraform-...rds.amazonaws.com:5432"
+```
+
+### Крок 3 — Перевірка Django
+
+```bash
+kubectl logs -n default deploy/django-app --tail=50
+```
+
+```
+[INFO] Starting gunicorn 21.2.0
+[INFO] Listening at: http://0.0.0.0:8000 (1)
+[INFO] Using worker: sync
+[INFO] Booting worker with pid: 7
+```
+
+✅ **Django успішно підключився до RDS PostgreSQL** — жодних помилок БД.
+
+### Висновок
+
+Модуль відтворено на рівні коду правильно та підтримує обидва режими. Aurora не запустилась виключно через обмеження AWS Free Tier акаунту.
+навіть якщо б відтворювати код не через вінальний проект, а з нуля, чи використавши набагато меньший проект, то  результат був би той самий.
+---
+
+
+Склад фінального проекту для швидкого огляду:
+
 # Final Project: CI/CD з Jenkins + Argo CD + Terraform + Helm
 
 Повний CI/CD pipeline для Django застосунку з автоматичним білдом, деплоєм та синхронізацією через GitOps.

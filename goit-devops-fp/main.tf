@@ -73,6 +73,12 @@ module "rds" {
   vpc_id                = module.vpc.vpc_id
   subnet_ids            = module.vpc.private_subnet_ids
   eks_security_group_id = module.eks.cluster_security_group_id
+
+  # Universal Module Configuration
+  use_aurora     = false # Set to true to switch to Aurora
+  engine         = "postgres"
+  engine_version = "16.6"
+  instance_class = "db.t3.micro"
 }
 
 # Fix for RDS EKS SG ID:
