@@ -1,6 +1,7 @@
 output "grafana_admin_password" {
   description = "The admin password for Grafana"
-  value       = "prom-operator" # Default for kube-prometheus-stack, usually retrieved from secret but simple output here
+  value       = var.grafana_admin_password
+  sensitive   = true
 }
 
 output "grafana_service_name" {
