@@ -31,25 +31,5 @@ spec:
           env:
             - name: DJANGO_ALLOWED_HOSTS
               value: "*"
-            - name: DATABASE_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "django-app.fullname" . }}-config
-                  key: DATABASE_HOST
-            - name: DATABASE_NAME
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "django-app.fullname" . }}-config
-                  key: DATABASE_NAME
-            - name: DATABASE_USER
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "django-app.fullname" . }}-config
-                  key: DATABASE_USER
-            - name: DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "django-app.fullname" . }}-secret
-                  key: DATABASE_PASSWORD
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

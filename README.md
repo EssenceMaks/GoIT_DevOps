@@ -13,14 +13,6 @@
 3. **Django App** — відкритий у браузері `http://localhost:8000` з текстом "Hello from Django on EKS!"
 ![Скріншот Django — веб-застосунок працює](screenshots/3-django-app.png)
 
-4. **Grafana** — Dashboard з графіками CPU/Memory кластера
-![Скріншот Grafana — Dashboard з метриками кластера](screenshots/4-grafana-dashboard.png)
-![Скріншот Grafana — Prometheus метрики кластера](screenshots/4_1-grafana-prometheus.png)
-
-5. **Prometheus** — Status → Targets (всі targets UP)
-![Скріншот Prometheus — Targets UP](screenshots/5_2-prometheus-targets.png)
-![Скріншот Prometheus — Targets UP (CLI)](screenshots/5_1-prometheus-targets.png)
-
 6. **kubectl** — вивід `kubectl get pods --all-namespaces` (всі поди Running)
 ![Скріншот kubectl — всі поди Running](screenshots/6-kubectl-pods.png)
 
@@ -31,8 +23,6 @@
 **Цей проєкт налаштовано на region `eu-central-1`**
 
 - **EKS Nodes**: 3× `t3.small` (2 vCPU, 2 GB RAM)
-- **RDS Instance**: `db.t3.micro` (PostgreSQL 16.6)
-- **Monitoring**: Prometheus + Grafana (kube-prometheus-stack)
 - **Мережа (VPC)**: Вузли Kubernetes (Worker Nodes) та інші ресурси розміщені частково або повністю в **публічних підмережах** без використання Managed NAT Gateway. Це зроблено **навмисно** виключно з метою економії коштів у рамках цього навчального проєкту (щоб уникнути погодинної оплати за NAT Gateway). У реальному production-середовищі worker-вузли обов'язково повинні знаходитися в приватних підмережах зі строгими правилами доступу та виходом в інтернет через NAT Gateway.
 
 ## 🎯 Що реалізовано
@@ -40,13 +30,11 @@
 ### Інфраструктура (Terraform)
 
 - **S3 + DynamoDB**: Backend для Terraform state
-- **VPC**: Публічні та приватні підмережі, Internet Gateway, NAT
+- **VPC**: Публічні та приватні підмережі, Internet Gateway, NAT (опціонально)
 - **ECR**: Docker registry для образів
 - **EKS**: Kubernetes кластер з EBS CSI Driver
-- **RDS**: PostgreSQL база даних
 - **Jenkins**: CI сервер (Helm) з Kubernetes plugin для динамічних агентів
 - **Argo CD**: GitOps CD інструмент (Helm) з автоматичною синхронізацією
-- **Prometheus + Grafana**: Моніторинг кластера та застосунку
 
 ### CI/CD Pipeline
 
@@ -54,10 +42,8 @@
 2. **Jenkins** пушить образ до **ECR**
 3. **Argo CD** автоматично виявляє зміни в Git (Helm chart)
 4. **Argo CD** синхронізує новий образ в Kubernetes
-5. **Prometheus** збирає метрики з Django (`/metrics` endpoint)
-6. **Grafana** візуалізує метрики кластера та застосунку
 
-### Безпека та DB Credentials
+
 Паролі до БД, Jenkins та інших компонентів **не зберігаються у відкритому вигляді** в репозиторії. Вони передаються безпечно:
 - Під час розгортання інфраструктури Terraform читає логіни та паролі з локального файлу `secrets.tfvars`, який виключено з системи контролю версій (внесено в `.gitignore`).
 - Значення для Django DB Credentials (такі як `DATABASE_PASSWORD`) передаються безпосередньо в середовище виконання через Kubernetes Secrets. Вони генеруються або передаються в кластер поза Git-репозиторієм (наприклад, через захищені змінні CI/CD під час `helm` деплою або інші механізми управління секретами), щоб запобігти їх витоку через публічний чи приватний Git.
@@ -81,11 +67,9 @@ goit-devops-fp/
 │   ├── vpc/                     # VPC, підмережі, IGW, NAT
 │   ├── ecr/                     # ECR репозиторій
 │   ├── eks/                     # EKS кластер + EBS CSI Driver
-│   ├── rds/                     # RDS PostgreSQL
 │   ├── jenkins/                 # Jenkins (Helm)
 │   ├── argo_cd/                 # Argo CD (Helm) + Applications
 │   │   └── charts/              # Helm chart для ArgoCD Applications
-│   └── monitoring/              # Prometheus + Grafana (Helm)
 └── charts/                      # Helm charts для деплою
     └── django-app/              # Helm chart Django застосунку
         └── templates/
@@ -127,9 +111,7 @@ git checkout goit_dev_ops_fp
 Створіть файл `goit-devops-fp/secrets.tfvars`:
 
 ```hcl
-db_password            = "ВашПарольБД"
 jenkins_admin_password = "ВашПарольJenkins"
-grafana_admin_password = "ВашПарольGrafana"
 argocd_admin_password  = "ВашПарольArgoCD"
 ```
 
@@ -188,19 +170,7 @@ kubectl port-forward svc/argo-cd-argocd-server 8081:443 -n argocd
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | % { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($_)) }
 ```
 
-**Grafana:**
-```powershell
-kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n monitoring
-# URL: http://localhost:3000
-# Login: admin
-# Password: (з secrets.tfvars — grafana_admin_password)
-```
 
-**Prometheus:**
-```powershell
-kubectl port-forward svc/kube-prometheus-stack-prometheus 9090:9090 -n monitoring
-# URL: http://localhost:9090
-```
 
 ## ⚙️ Налаштування сервісів після розгортання
 
@@ -233,26 +203,7 @@ kubectl port-forward svc/kube-prometheus-stack-prometheus 9090:9090 -n monitorin
 3. Перевірте статус: має бути **Synced** + **Healthy**
 4. Якщо **OutOfSync** — натисніть **Sync**
 
-### Grafana — Імпорт Dashboards
 
-1. Відкрийте http://localhost:3000
-2. Перейдіть: **Dashboards** → **New** → **Import**
-3. Введіть ID дашборду та натисніть **Load**:
-
-| Dashboard ID | Назва | Опис |
-|---|---|---|
-| **315** | Kubernetes Cluster Monitoring | Загальний огляд кластера |
-| **6417** | Kubernetes Pods | Метрики подів |
-| **1860** | Node Exporter Full | Детальні метрики нод |
-
-4. Виберіть **Data Source**: `Prometheus`
-5. Натисніть **Import**
-
-### Prometheus — Перевірка Targets
-
-1. Відкрийте http://localhost:9090
-2. Перейдіть: **Status** → **Targets**
-3. Перевірте що всі targets мають статус **UP**
 
 ## 🔄 Робочий процес CI/CD
 
@@ -273,20 +224,7 @@ Developer pushes code → Jenkins detects → Kaniko builds image → Push to EC
 5. Argo CD виявляє зміни в Helm chart та синхронізує деплой
 6. Kubernetes оновлює под з новою версією образу
 
-## 📊 Моніторинг
 
-### Django Metrics
-
-Django застосунок експортує метрики через `django-prometheus`:
-- Endpoint: `/metrics`
-- Метрики: HTTP запити, latency, response codes
-
-### Kubernetes Metrics
-
-Prometheus автоматично збирає:
-- **Node Exporter**: CPU, RAM, Disk, Network нод
-- **Kube State Metrics**: стан подів, деплойментів, сервісів
-- **cAdvisor**: ресурси контейнерів
 
 ## 🔧 Troubleshooting
 
@@ -312,15 +250,7 @@ kubectl describe pod <pod-name> -n default
 kubectl logs <pod-name> -n default
 ```
 
-### Grafana не показує дані
 
-```powershell
-# Перевірте чи Prometheus працює
-kubectl get pods -n monitoring | Select-String prometheus
-
-# Перевірте Data Sources в Grafana
-# Grafana UI → Connections → Data Sources → Prometheus → Test
-```
 
 ### ImagePullBackOff
 
@@ -350,5 +280,3 @@ terraform destroy -var-file="secrets.tfvars"
 - [Kaniko Documentation](https://github.com/GoogleContainerTools/kaniko)
 - [EKS Best Practices](https://aws.github.io/aws-eks-best-practices/)
 - [Helm Documentation](https://helm.sh/docs/)
-- [Prometheus Documentation](https://prometheus.io/docs/)
-- [Grafana Dashboards](https://grafana.com/grafana/dashboards/)

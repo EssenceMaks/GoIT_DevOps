@@ -16,26 +16,8 @@ variable "cluster_name" {
   default     = "final-project-eks"
 }
 
-variable "db_username" {
-  description = "Database User"
-  type        = string
-  default     = "dbadmin"
-}
-
-variable "db_password" {
-  description = "Database Password"
-  type        = string
-  sensitive   = true
-}
-
 variable "jenkins_admin_password" {
   description = "Jenkins Admin Password"
-  type        = string
-  sensitive   = true
-}
-
-variable "grafana_admin_password" {
-  description = "Grafana Admin Password"
   type        = string
   sensitive   = true
 }

@@ -64,23 +64,6 @@ module "eks" {
   subnet_ids   = module.vpc.public_subnet_ids
 }
 
-module "rds" {
-  source                = "./modules/rds"
-  project_name          = var.project_name
-  db_name               = "djangodb"
-  db_username           = var.db_username
-  db_password           = var.db_password
-  vpc_id                = module.vpc.vpc_id
-  subnet_ids            = module.vpc.private_subnet_ids
-  eks_security_group_id = module.eks.cluster_security_group_id
-}
-
-# Fix for RDS EKS SG ID:
-# The EKS module currently only outputs endpoint, name, CA. 
-# I need to update EKS module to output security group ID if I want to reference it cleanly. 
-# Or I can use data source in RDS module? 
-# Better to update EKS module. I'll add a todo for that or just update it now.
-
 module "jenkins" {
   source         = "./modules/jenkins"
   namespace      = "jenkins"
@@ -92,11 +75,4 @@ module "argo_cd" {
   source     = "./modules/argo_cd"
   namespace  = "argocd"
   depends_on = [module.eks]
-}
-
-module "monitoring" {
-  source                 = "./modules/monitoring"
-  namespace              = "monitoring"
-  grafana_admin_password = var.grafana_admin_password
-  depends_on             = [module.eks]
 }
