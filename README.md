@@ -13,8 +13,8 @@
 3. **Django App** — відкритий у браузері `http://localhost:8000` з текстом "Hello from Django on EKS!"
 ![Скріншот Django — веб-застосунок працює](screenshots/3-django-app.png)
 
-6. **kubectl** — вивід `kubectl get pods --all-namespaces` (всі поди Running)
-![Скріншот kubectl — всі поди Running](screenshots/6-kubectl-pods.png)
+4. **kubectl** — вивід `kubectl get pods --all-namespaces` (всі поди Running)
+![Скріншот kubectl — всі поди Running](screenshots/4-kubectl-pods.png)
 
 ---
 
@@ -103,7 +103,7 @@ aws configure
 ```powershell
 git clone https://github.com/EssenceMaks/GoIT_DevOps.git
 cd GoIT_DevOps
-git checkout goit_dev_ops_fp
+git checkout lesson-8-9
 ```
 
 ### Крок 2: Налаштування змінних
@@ -192,7 +192,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
    - **Definition**: `Pipeline script from SCM`
    - **SCM**: `Git`
    - **Repository URL**: `https://github.com/EssenceMaks/GoIT_DevOps.git`
-   - **Branch Specifier**: `*/goit_dev_ops_fp`
+   - **Branch Specifier**: `*/lesson-8-9`
    - **Script Path**: `goit-devops-fp/Django/Jenkinsfile`
 3. Натисніть **Save** → **Build Now**
 
