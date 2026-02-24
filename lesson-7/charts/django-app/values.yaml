@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: 794531974301.dkr.ecr.eu-central-1.amazonaws.com/final-project-repo
+  repository: 794531974301.dkr.ecr.eu-central-1.amazonaws.com/lesson-7-repo
   pullPolicy: Always
   tag: "latest"
 

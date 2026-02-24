@@ -17,7 +17,7 @@
 
 ```powershell
 # Перейдіть у папку інфраструктури
-cd goit-devops-fp
+cd lesson-7
 
 # Ініціалізація та розгортання
 terraform init
@@ -36,13 +36,13 @@ aws ecr get-login-password --region eu-central-1 | docker login --username AWS -
 
 # 2. Зберіть образ Django (з кореня репозиторію, де лежить папка Django)
 cd ../Django
-docker build -t final-project-repo .
+docker build -t lesson-7-repo .
 
 # 3. Додайте тег до образу
-docker tag final-project-repo:latest <ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com/final-project-repo:latest
+docker tag lesson-7-repo:latest <ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com/lesson-7-repo:latest
 
 # 4. Завантажте образ до ECR
-docker push <ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com/final-project-repo:latest
+docker push <ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com/lesson-7-repo:latest
 ```
 
 ---
@@ -51,17 +51,17 @@ docker push <ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com/final-project-repo:l
 Налаштуйте `kubectl` для роботи зі створеним кластером:
 
 ```powershell
-aws eks update-kubeconfig --region eu-central-1 --name final-project-eks
+aws eks update-kubeconfig --region eu-central-1 --name lesson-7-eks
 kubectl get nodes
 ```
 
 ---
 
 ### Крок 4. Деплой застосунку через Helm
-Перед деплоєм обов'язково оновіть свій `repository` в файлі `goit-devops-fp/charts/django-app/values.yaml` (рядок 4) та вкажіть ваш `<ACCOUNT_ID>`.
+Перед деплоєм обов'язково оновіть свій `repository` в файлі `lesson-7/charts/django-app/values.yaml` (рядок 4) та вкажіть ваш `<ACCOUNT_ID>`.
 
 ```powershell
-cd ../goit-devops-fp
+cd ../lesson-7
 
 helm upgrade --install django-app ./charts/django-app
 ```
@@ -87,6 +87,6 @@ kubectl get configmap django-app-config -o yaml
 ## 🧹 Очищення ресурсів
 Не забудьте видалити ресурси після перевірки, щоб не платити за AWS:
 ```powershell
-# Викликати з папки goit-devops-fp
+# Викликати з папки lesson-7
 terraform destroy -auto-approve
 ```
