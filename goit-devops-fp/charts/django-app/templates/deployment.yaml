@@ -28,8 +28,8 @@ spec:
             - name: http
               containerPort: 8000
               protocol: TCP
-          env:
-            - name: DJANGO_ALLOWED_HOSTS
-              value: "*"
+          envFrom:
+            - configMapRef:
+                name: {{ include "django-app.fullname" . }}-config
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

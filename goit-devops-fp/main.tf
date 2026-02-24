@@ -64,15 +64,3 @@ module "eks" {
   subnet_ids   = module.vpc.public_subnet_ids
 }
 
-module "jenkins" {
-  source         = "./modules/jenkins"
-  namespace      = "jenkins"
-  admin_password = var.jenkins_admin_password
-  depends_on     = [module.eks]
-}
-
-module "argo_cd" {
-  source     = "./modules/argo_cd"
-  namespace  = "argocd"
-  depends_on = [module.eks]
-}

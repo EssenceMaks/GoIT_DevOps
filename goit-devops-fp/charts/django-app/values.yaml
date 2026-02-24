@@ -6,7 +6,7 @@ image:
   tag: "latest"
 
 service:
-  type: ClusterIP
+  type: LoadBalancer
   port: 8000
 
 ingress:
@@ -21,10 +21,12 @@ resources:
     memory: 128Mi
 
 autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 80
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
 
 env:
   DJANGO_ENV: "production"
+  DJANGO_ALLOWED_HOSTS: "*"
+  DEBUG: "False"

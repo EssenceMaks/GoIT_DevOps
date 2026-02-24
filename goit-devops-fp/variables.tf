@@ -16,14 +16,3 @@ variable "cluster_name" {
   default     = "final-project-eks"
 }
 
-variable "jenkins_admin_password" {
-  description = "Jenkins Admin Password"
-  type        = string
-  sensitive   = true
-}
-
-variable "argocd_admin_password" {
-  description = "ArgoCD Admin Password"
-  type        = string
-  sensitive   = true
-}
