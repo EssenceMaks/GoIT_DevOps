@@ -5,16 +5,16 @@
 ## 📸 Скріншоти (Proof of Work)
 
 1. **Jenkins** — сторінка job `django-app` з успішним білдом (зелена галочка)
-![Скріншот Jenkins — успішний білд](screenshots/1-jenkins-build.png)
+![Скріншот Jenkins — успішний білд](screenshots/1-jenkins-build_8-9.png)
 
 2. **Argo CD** — application `django-app` зі статусом Synced / Healthy
-![Скріншот Argo CD — django-app Synced](screenshots/2-argocd-app.png)
+![Скріншот Argo CD — django-app Synced](screenshots/2-argocd-app_8-9.png)
 
 3. **Django App** — відкритий у браузері `http://localhost:8000` з текстом "Hello from Django on EKS!"
-![Скріншот Django — веб-застосунок працює](screenshots/3-django-app.png)
+![Скріншот Django — веб-застосунок працює](screenshots/3-django-app_8-9.png)
 
 4. **kubectl** — вивід `kubectl get pods --all-namespaces` (всі поди Running)
-![Скріншот kubectl — всі поди Running](screenshots/4-kubectl-pods.png)
+![Скріншот kubectl — всі поди Running](screenshots/4-kubectl-pods_8-9.png)
 
 ---
 
