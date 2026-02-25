@@ -105,7 +105,14 @@ terraform apply -auto-approve
    ```powershell
    terraform init -migrate-state
    ```
+   
+   *Приклад та результат:*
+   ![Terraform migrate-state](screenshots/terraform-mig.png)
+
 3. Видаліть усі ресурси:
    ```powershell
    terraform destroy -auto-approve
    ```
+   
+   *Приклад та результат:*
+   ![Terraform destroy](screenshots/terraform-destroy.png)
