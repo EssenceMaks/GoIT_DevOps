@@ -75,6 +75,27 @@ terraform apply -auto-approve
 
 ---
 
+## 📸 Результати виконання (Скріншоти)
+
+1. **Термінальний вивід `terraform init` та `terraform apply`**
+![Terraform Init](screenshots/terraform-init.png)
+![Terraform Apply](screenshots/terraform-apply.png)
+
+2. **AWS S3 Bucket (для збереження стейту)**
+![AWS S3](screenshots/aws_S3.png)
+
+3. **AWS DynamoDB (для state locking)**
+![AWS DynamoDB](screenshots/aws_DynamoDB.png)
+
+4. **AWS VPC (Створена мережа та підмережі)**
+![AWS VPC](screenshots/aws_VPS.png)
+![AWS VPC Subnets](screenshots/aws_VPS_1.png)
+
+5. **AWS ECR (Репозиторій для Docker-образів)**
+![AWS ECR](screenshots/aws_ECR.png)
+
+---
+
 ## 🧹 Очищення ресурсів (Terraform Destroy)
 
 Щоб не сплачувати за ресурси AWS після перевірки, видаліть їх:
