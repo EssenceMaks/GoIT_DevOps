@@ -7,12 +7,5 @@ variable "region" {
 variable "project_name" {
   description = "Project Name"
   type        = string
-  default     = "lesson-7"
+  default     = "lesson-5"
 }
-
-variable "cluster_name" {
-  description = "EKS Cluster Name"
-  type        = string
-  default     = "lesson-7-eks"
-}
-

@@ -1,9 +1,9 @@
 resource "aws_ecr_repository" "app_repo" {
-  name                 = var.repo_name
+  name                 = var.ecr_name
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 
   image_scanning_configuration {
-    scan_on_push = true
+    scan_on_push = var.scan_on_push
   }
 }
