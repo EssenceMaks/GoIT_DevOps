@@ -106,7 +106,7 @@ kubectl get configmap django-app-config -o yaml
 
 ---
 
-## 📸 Результати виконання (Скріншоты)
+## 📸 Результати виконання (Скріншоти)
 
 1. **Термінальний вивід `terraform apply`**
 ![Terraform Apply](screenshots/t-apply.png)
