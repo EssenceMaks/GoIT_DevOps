@@ -1,6 +1,6 @@
 # Урок 7: Розгортання Django в EKS за допомогою Terraform, AWS CLI та Helm
 
-Цей репозиторій містить інфраструктуру та Helm-чарт для розгортання Django-додатка в Kubernetes (Amazon EKS) з урахуванням усіх вимог 7-го уроку. 
+Цей репозиторій містить інфраструктуру та Helm-чарт для розгортання Django-додатка в Kubernetes (Amazon EKS) 
 
 ## 🎯 Що реалізовано
 - **Terraform:** створення VPC, підмереж, ECR репозиторію та EKS кластера.
@@ -75,6 +75,8 @@ helm upgrade --install django-app ./charts/django-app
 kubectl get svc django-app
 ```
 > Скопіюйте значення `EXTERNAL-IP` і відкрийте його у браузері разом з портом: `http://<EXTERNAL-IP>:8000`.
+example:
+http://a15a64ca51309454398bb2556ddddce3-2045383370.eu-central-1.elb.amazonaws.com:8000
 
 Перевірка HPA та ConfigMap:
 ```powershell
@@ -83,6 +85,18 @@ kubectl get configmap django-app-config -o yaml
 ```
 
 ---
+
+## 📸 Результати виконання (Скріншоты)
+
+1. **Термінальний вивід `terraform apply`**
+![Terraform Apply](screenshots/t-apply.png)
+
+2. **Перевірка робочих Pods, Services, HPA та ConfigMap**
+![Kubernetes Resources](screenshots/1-kubectl-pods_7.png)
+
+3. **Перевірка робочих django**
+http://a15a64ca51309454398bb2556ddddce3-2045383370.eu-central-1.elb.amazonaws.com:8000
+![Kubernetes Resources](screenshots/django_works.png)
 
 ## 🧹 Очищення ресурсів
 Не забудьте видалити ресурси після перевірки, щоб не платити за AWS:
